@@ -1,0 +1,1171 @@
+<!DOCTYPE html><html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>LuckyFact v3.0</title>
+  <style>
+    :root {
+      --bg-main: #0F172A;
+      --bg-deep: #091120;
+      --bg-card: rgba(255,255,255,0.08);
+      --bg-card-2: rgba(255,255,255,0.04);
+      --line-soft: rgba(255,255,255,0.16);
+      --line-strong: rgba(255,255,255,0.28);
+      --text-main: #F8FAFC;
+      --text-soft: #CBD5E1;
+      --cyan: #38BDF8;
+      --cyan-2: #7DD3FC;
+      --gold-1: #FDE68A;
+      --gold-2: #F59E0B;
+      --gold-3: #B45309;
+      --green: #10B981;
+      --red: #F43F5E;
+      --shadow-deep: 0 22px 60px rgba(0,0,0,0.42);
+      --shadow-soft: 0 10px 28px rgba(0,0,0,0.22);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 18px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --app-max: 460px;
+      --transition-fast: 180ms ease;
+      --transition-med: 320ms ease;
+      --transition-slow: 520ms cubic-bezier(.22,1,.36,1);
+    }* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg-main); color: var(--text-main); font-family: Inter, Arial, sans-serif; }
+body {
+  background:
+    radial-gradient(circle at top, rgba(56,189,248,0.10), transparent 34%),
+    radial-gradient(circle at bottom, rgba(245,158,11,0.06), transparent 26%),
+    linear-gradient(180deg, #0f172a 0%, #0b1323 48%, #08101d 100%);
+  display: flex;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.app {
+  width: 100%;
+  max-width: var(--app-max);
+  min-height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  padding:
+    calc(18px + var(--safe-top))
+    16px
+    calc(18px + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  isolation: isolate;
+}
+
+.ambient-glow,
+.ambient-glow::before,
+.ambient-glow::after {
+  position: absolute;
+  inset: auto;
+  pointer-events: none;
+  content: "";
+  border-radius: 999px;
+  filter: blur(44px);
+  opacity: .55;
+  z-index: -1;
+}
+.ambient-glow { width: 180px; height: 180px; top: 12%; right: -40px; background: rgba(56,189,248,0.14); }
+.ambient-glow::before { width: 160px; height: 160px; left: -220px; top: 480px; background: rgba(244,63,94,0.10); }
+.ambient-glow::after { width: 180px; height: 180px; left: -130px; top: 160px; background: rgba(245,158,11,0.12); }
+
+.hud {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.hud-panel,
+.progress-panel,
+.fact-card,
+.bet-panel,
+.action-panel,
+.stage-card,
+.result-card,
+.start-card,
+.overlay-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+  border: 1px solid var(--line-soft);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.hud-panel {
+  border-radius: 20px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 74px;
+}
+
+.hud-label {
+  font-size: 12px;
+  color: var(--text-soft);
+  letter-spacing: 0.08em;
+}
+
+.score-value {
+  font-size: clamp(26px, 5.2vw, 34px);
+  font-weight: 900;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 0 18px rgba(56,189,248,.22);
+}
+
+.streak-badge {
+  min-width: 70px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  text-align: center;
+  background: rgba(56,189,248,0.10);
+  border: 1px solid rgba(125,211,252,0.18);
+}
+
+.streak-badge strong { display: block; font-size: 18px; }
+.streak-badge span { font-size: 11px; color: var(--text-soft); }
+
+.progress-panel {
+  border-radius: 20px;
+  padding: 12px 14px;
+  min-width: 126px;
+  min-height: 74px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.progress-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.progress-count {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.progress-track {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--cyan), var(--cyan-2));
+  box-shadow: 0 0 20px rgba(56,189,248,.35);
+  transition: width var(--transition-slow);
+}
+
+.stage-label {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cyan-2);
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  position: relative;
+}
+
+.fact-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  position: relative;
+}
+
+.fact-card {
+  width: 100%;
+  min-height: 240px;
+  border-radius: var(--radius-xl);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-deep);
+  border: 1px solid rgba(125,211,252,0.18);
+  transition: transform var(--transition-med), opacity var(--transition-med), filter var(--transition-med);
+}
+
+.fact-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(125,211,252,0.10), transparent 38%),
+    linear-gradient(315deg, rgba(255,255,255,0.04), transparent 48%);
+  pointer-events: none;
+}
+
+.fact-card.is-fading {
+  opacity: 0;
+  transform: scale(.96);
+  filter: blur(10px);
+}
+
+.fact-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  position: relative;
+  z-index: 1;
+}
+
+.fact-badge,
+.risk-badge {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+.risk-badge { color: var(--gold-1); }
+
+.fact-text {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(28px, 5.6vw, 36px);
+  line-height: 1.3;
+  font-weight: 900;
+  text-align: center;
+  text-wrap: balance;
+  margin: 0;
+}
+
+.fact-sub {
+  margin-top: 18px;
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.bet-panel,
+.action-panel {
+  border-radius: 24px;
+  padding: 14px;
+}
+
+.bet-header,
+.action-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.selected-bet {
+  color: var(--gold-1);
+  font-weight: 800;
+}
+
+.coins-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.coin-btn {
+  position: relative;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  min-height: 92px;
+  border-radius: 50%;
+  transform: translateZ(0);
+  transition: transform var(--transition-fast), filter var(--transition-fast), opacity var(--transition-fast);
+}
+
+.coin-btn:active { transform: scale(.96); }
+
+.coin-face {
+  width: 92px;
+  height: 92px;
+  max-width: 100%;
+  margin: 0 auto;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: #2b1602;
+  font-weight: 900;
+  font-size: 24px;
+  background:
+    radial-gradient(circle at 30% 28%, #fff6d8 0%, var(--gold-1) 22%, var(--gold-2) 58%, var(--gold-3) 100%);
+  box-shadow:
+    inset 0 2px 2px rgba(255,255,255,.55),
+    inset 0 -8px 12px rgba(93,40,0,.26),
+    0 10px 18px rgba(0,0,0,.26);
+  border: 3px solid rgba(255,243,207,0.66);
+}
+
+.coin-face::before,
+.coin-face::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  inset: 7px;
+  border: 2px dashed rgba(124,75,8,0.34);
+}
+
+.coin-face::after {
+  inset: 16px;
+  border-style: solid;
+  border-color: rgba(255,248,220,0.40);
+}
+
+.coin-btn.is-selected .coin-face {
+  box-shadow:
+    inset 0 2px 2px rgba(255,255,255,.55),
+    inset 0 -8px 12px rgba(93,40,0,.26),
+    0 0 0 4px rgba(255,255,255,0.07),
+    0 0 30px rgba(245,158,11,0.30),
+    0 14px 26px rgba(0,0,0,.34);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.coin-caption {
+  display: block;
+  text-align: center;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.answers-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.answer-btn {
+  min-height: 72px;
+  border: 0;
+  border-radius: 22px;
+  font-size: 26px;
+  font-weight: 900;
+  color: white;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transform: translateZ(0);
+  transition: transform var(--transition-fast), opacity var(--transition-fast), filter var(--transition-fast);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 10px 20px rgba(0,0,0,0.22);
+}
+
+.answer-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.20), rgba(255,255,255,0.03));
+  pointer-events: none;
+}
+
+.answer-btn:active { transform: scale(.98); }
+
+.answer-btn.truth { background: linear-gradient(180deg, #1b9d76 0%, #0f7a5c 100%); }
+.answer-btn.lie { background: linear-gradient(180deg, #e34566 0%, #c01d44 100%); }
+
+.answer-btn:disabled,
+.coin-btn:disabled,
+.share-btn:disabled,
+.primary-btn:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+  filter: grayscale(.1);
+}
+
+.answer-btn.is-armed {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    0 0 0 1px rgba(255,255,255,0.06),
+    0 10px 20px rgba(0,0,0,0.22),
+    0 0 26px rgba(255,255,255,0.08);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  padding: 10px;
+  z-index: 20;
+}
+
+.overlay-card {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 30px;
+  padding: 28px 22px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(18px) scale(.96);
+  transition: opacity var(--transition-med), transform var(--transition-med);
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.overlay-card.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.gift {
+  font-size: 76px;
+  line-height: 1;
+  display: inline-block;
+  transform-origin: center;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,.24));
+}
+
+.gift.phase-pop { animation: giftPop 420ms ease-out both; }
+.gift.phase-shake { animation: giftShake 430ms ease-in-out both; }
+.gift.phase-burst { animation: giftBurst 420ms cubic-bezier(.2,.9,.2,1) both; }
+
+@keyframes giftPop {
+  0% { transform: scale(.4); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes giftShake {
+  0%,100% { transform: scale(1.12) rotate(0deg); }
+  20% { transform: scale(1.2) rotate(-4deg); }
+  40% { transform: scale(1.18) rotate(5deg); }
+  60% { transform: scale(1.22) rotate(-6deg); }
+  80% { transform: scale(1.19) rotate(4deg); }
+}
+
+@keyframes giftBurst {
+  0% { transform: scale(1.08); opacity: 1; }
+  65% { transform: scale(1.62); opacity: 1; }
+  100% { transform: scale(2.1); opacity: 0; }
+}
+
+.burst-ring {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  border: 4px solid rgba(255,255,255,0.36);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(.36);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.burst-ring.show { animation: burstRing 560ms ease-out both; }
+
+@keyframes burstRing {
+  0% { transform: translate(-50%, -50%) scale(.36); opacity: .85; }
+  100% { transform: translate(-50%, -50%) scale(1.54); opacity: 0; }
+}
+
+.result-amount {
+  margin-top: 20px;
+  font-size: clamp(44px, 10vw, 64px);
+  line-height: 1;
+  font-weight: 900;
+  text-shadow: 0 0 24px rgba(0,0,0,0.24);
+}
+
+.result-amount.win { color: var(--green); }
+.result-amount.lose { color: var(--red); }
+
+.result-label {
+  margin-top: 10px;
+  color: var(--text-soft);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  z-index: 30;
+  background: rgba(7,11,19,0.30);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.screen.show { display: flex; }
+
+.start-card,
+.stage-card,
+.result-card {
+  width: 100%;
+  border-radius: 30px;
+  padding: 26px 20px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: var(--shadow-deep);
+}
+
+.screen-kicker {
+  color: var(--cyan-2);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+
+.screen-title {
+  font-size: clamp(28px, 7vw, 40px);
+  line-height: 1.15;
+  margin: 0 0 10px;
+  font-weight: 900;
+}
+
+.screen-text {
+  color: var(--text-soft);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.stats-grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.stat-box {
+  border-radius: 18px;
+  padding: 14px 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.btn-row {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.primary-btn,
+.secondary-btn,
+.share-btn {
+  min-height: 58px;
+  border: 0;
+  border-radius: 18px;
+  padding: 0 18px;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform var(--transition-fast), opacity var(--transition-fast), filter var(--transition-fast);
+}
+
+.primary-btn:active,
+.secondary-btn:active,
+.share-btn:active { transform: scale(.98); }
+
+.primary-btn {
+  color: #04131d;
+  background: linear-gradient(180deg, #8de7ff, #38bdf8);
+  box-shadow: 0 12px 24px rgba(56,189,248,0.24);
+}
+
+.secondary-btn {
+  color: white;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.share-btn {
+  color: white;
+  background: linear-gradient(180deg, #25D366, #169b46);
+  box-shadow: 0 12px 24px rgba(37,211,102,0.22);
+}
+
+.footer-note {
+  text-align: center;
+  color: rgba(203,213,225,0.75);
+  font-size: 12px;
+  padding-bottom: 4px;
+}
+
+@media (max-width: 390px) {
+  .app { padding-left: 12px; padding-right: 12px; }
+  .fact-card { min-height: 220px; padding: 18px; }
+  .fact-text { font-size: 26px; }
+  .answer-btn { font-size: 24px; min-height: 68px; }
+  .coin-face { width: 84px; height: 84px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="ambient-glow"></div><header class="hud">
+  <section class="hud-panel" aria-label="ניקוד וקומבו">
+    <div>
+      <div class="hud-label">ניקוד מצטבר</div>
+      <div class="score-value" id="scoreValue">0</div>
+    </div>
+    <div class="streak-badge" aria-label="רצף הצלחות">
+      <strong id="streakValue">x0</strong>
+      <span>Streak</span>
+    </div>
+  </section>
+
+  <section class="progress-panel" aria-label="התקדמות">
+    <div class="progress-top">
+      <span>התקדמות</span>
+      <strong class="progress-count" id="progressCount">1/15</strong>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="stage-label" id="stageLabel">שלב 1 מתוך 3</div>
+  </section>
+</header>
+
+<main class="main" id="gameShell">
+  <div class="fact-wrap">
+    <article class="fact-card" id="factCard" aria-live="polite">
+      <div class="fact-topline">
+        <span class="fact-badge">LuckyFact</span>
+        <span class="risk-badge" id="riskBadge">High Risk Fact</span>
+      </div>
+      <p class="fact-text" id="factText"></p>
+      <div class="fact-sub" id="factSub">בחר מטבע, ואז אמת או שקר</div>
+    </article>
+
+    <div class="overlay" aria-hidden="true">
+      <div class="overlay-card" id="explosionOverlay">
+        <div class="burst-ring" id="burstRing"></div>
+        <div class="gift" id="giftIcon">🎁</div>
+        <div class="result-amount" id="resultAmount">+50</div>
+        <div class="result-label" id="resultLabel">פגיעה מדויקת</div>
+      </div>
+    </div>
+  </div>
+
+  <section class="bet-panel" aria-label="בחירת סכום הימור">
+    <div class="bet-header">
+      <span>בחר סכום הימור</span>
+      <span class="selected-bet" id="selectedBetText">לא נבחר מטבע</span>
+    </div>
+    <div class="coins-row" id="coinsRow">
+      <button class="coin-btn" data-bet="10" aria-label="הימור 10">
+        <span class="coin-face">10</span>
+        <span class="coin-caption">קטן</span>
+      </button>
+      <button class="coin-btn" data-bet="50" aria-label="הימור 50">
+        <span class="coin-face">50</span>
+        <span class="coin-caption">בינוני</span>
+      </button>
+      <button class="coin-btn" data-bet="100" aria-label="הימור 100">
+        <span class="coin-face">100</span>
+        <span class="coin-caption">גבוה</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="action-panel" aria-label="בחירת תשובה">
+    <div class="action-header">
+      <span>בחר תשובה</span>
+      <span id="actionStateText">נעול עד בחירת מטבע</span>
+    </div>
+    <div class="answers-row">
+      <button class="answer-btn truth" id="truthBtn" disabled>אמת</button>
+      <button class="answer-btn lie" id="lieBtn" disabled>שקר</button>
+    </div>
+  </section>
+</main>
+
+<div class="footer-note">15 שאלות · 3 שלבים · חוויה מהירה בלי טעינות</div>
+
+<section class="screen show" id="startScreen" aria-modal="true">
+  <div class="start-card">
+    <div class="screen-kicker">LUCKYFACT v3.0</div>
+    <h1 class="screen-title">למד מהר. הימר חכם. תתפוצץ על התוצאה.</h1>
+    <p class="screen-text">
+      15 שאלות מהירות ב־3 שלבים. בכל שאלה בוחרים מטבע, מהמרים על אמת או שקר,
+      ורואים את התוצאה נחשפת באנימציית פיצוץ מהירה.
+    </p>
+    <div class="btn-row">
+      <button class="primary-btn" id="startBtn">התחל משחק</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="stageScreen" aria-modal="true">
+  <div class="stage-card">
+    <div class="screen-kicker" id="stageKicker">סיכום שלב</div>
+    <h2 class="screen-title" id="stageTitle">סיימת שלב 1</h2>
+    <p class="screen-text" id="stageText">5 שאלות הסתיימו. הנה המצב שלך כרגע.</p>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-value" id="stageScoreStat">0</div>
+        <div class="stat-label">ניקוד כולל</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="stageCorrectStat">0</div>
+        <div class="stat-label">תשובות נכונות</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="stageAccuracyStat">0%</div>
+        <div class="stat-label">דיוק</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="stageBestStreakStat">0</div>
+        <div class="stat-label">רצף שיא</div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="primary-btn" id="continueBtn">המשך לשלב הבא</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="finalScreen" aria-modal="true">
+  <div class="result-card">
+    <div class="screen-kicker">סיום משחק</div>
+    <h2 class="screen-title">המסע הושלם</h2>
+    <p class="screen-text">15 שאלות, החלטות מהירות וניקוד סופי מוכן לשיתוף.</p>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-value" id="finalScoreStat">0</div>
+        <div class="stat-label">ניקוד סופי</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="finalCorrectStat">0</div>
+        <div class="stat-label">נכונות</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="finalAccuracyStat">0%</div>
+        <div class="stat-label">אחוז הצלחה</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="finalBestStreakStat">0</div>
+        <div class="stat-label">רצף שיא</div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="share-btn" id="shareBtn">שתף ב־WhatsApp</button>
+      <button class="secondary-btn" id="restartBtn">שחק שוב</button>
+    </div>
+  </div>
+</section>
+
+  </div>  <script>
+    const QUESTIONS = [
+      { text: 'יום אחד על כוכב נוגה ארוך יותר משנה שלמה על אותו כוכב לכת.', answer: true, risk: 'High Risk Fact' },
+      { text: 'דבש הוא המזון היחיד שכמעט ואינו מתקלקל לאורך שנים רבות.', answer: true, risk: 'Stable Fact' },
+      { text: 'הקוטב הצפוני נמצא על יבשת קפואה כמו אנטארקטיקה.', answer: false, risk: 'Trap Fact' },
+      { text: 'לבני אדם יש יותר מחמישה חושים פעילים.', answer: true, risk: 'Mind Twist' },
+      { text: 'עטלפים הם עיוורים לחלוטין.', answer: false, risk: 'Classic Myth' },
+      { text: 'האותיות בשלטי יציאה ממטוסים מוארות גם במקרה של כשל חשמלי.', answer: true, risk: 'Tech Fact' },
+      { text: 'הלב האנושי נמצא בדיוק במרכז בית החזה.', answer: false, risk: 'Body Trap' },
+      { text: 'תמנון מחזיק שלושה לבבות.', answer: true, risk: 'Ocean Fact' },
+      { text: 'הירח מפיק אור משלו.', answer: false, risk: 'Space Trap' },
+      { text: 'מים חמים יכולים, בתנאים מסוימים, לקפוא מהר יותר ממים קרים.', answer: true, risk: 'Counterintuitive' },
+      { text: 'כל המדבריות בעולם חמים.', answer: false, risk: 'Geo Trap' },
+      { text: 'DNA של בני אדם ושימפנזים דומה מאוד.', answer: true, risk: 'Science Fact' },
+      { text: 'כרישים הם יונקים ימיים.', answer: false, risk: 'Animal Trap' },
+      { text: 'יש ברקים גם בתוך ענני אפר של הרי געש.', answer: true, risk: 'Wild Fact' },
+      { text: 'זכוכית היא נוזל שזורם לאט בטמפרטורת החדר.', answer: false, risk: 'Old Myth' }
+    ];
+
+    const STATE = {
+      INTRO: 'INTRO',
+      WAITING_BET: 'WAITING_BET',
+      READY_TO_ANSWER: 'READY_TO_ANSWER',
+      RESOLVING: 'RESOLVING',
+      STAGE_BREAK: 'STAGE_BREAK',
+      FINISHED: 'FINISHED'
+    };
+
+    const appState = {
+      mode: STATE.INTRO,
+      currentIndex: 0,
+      selectedBet: null,
+      score: 0,
+      correct: 0,
+      streak: 0,
+      bestStreak: 0,
+      answers: [],
+      resolving: false
+    };
+
+    const el = {
+      scoreValue: document.getElementById('scoreValue'),
+      streakValue: document.getElementById('streakValue'),
+      progressCount: document.getElementById('progressCount'),
+      progressFill: document.getElementById('progressFill'),
+      stageLabel: document.getElementById('stageLabel'),
+      riskBadge: document.getElementById('riskBadge'),
+      factText: document.getElementById('factText'),
+      factSub: document.getElementById('factSub'),
+      factCard: document.getElementById('factCard'),
+      selectedBetText: document.getElementById('selectedBetText'),
+      actionStateText: document.getElementById('actionStateText'),
+      coins: [...document.querySelectorAll('.coin-btn')],
+      truthBtn: document.getElementById('truthBtn'),
+      lieBtn: document.getElementById('lieBtn'),
+      startScreen: document.getElementById('startScreen'),
+      stageScreen: document.getElementById('stageScreen'),
+      finalScreen: document.getElementById('finalScreen'),
+      startBtn: document.getElementById('startBtn'),
+      continueBtn: document.getElementById('continueBtn'),
+      restartBtn: document.getElementById('restartBtn'),
+      shareBtn: document.getElementById('shareBtn'),
+      stageKicker: document.getElementById('stageKicker'),
+      stageTitle: document.getElementById('stageTitle'),
+      stageText: document.getElementById('stageText'),
+      stageScoreStat: document.getElementById('stageScoreStat'),
+      stageCorrectStat: document.getElementById('stageCorrectStat'),
+      stageAccuracyStat: document.getElementById('stageAccuracyStat'),
+      stageBestStreakStat: document.getElementById('stageBestStreakStat'),
+      finalScoreStat: document.getElementById('finalScoreStat'),
+      finalCorrectStat: document.getElementById('finalCorrectStat'),
+      finalAccuracyStat: document.getElementById('finalAccuracyStat'),
+      finalBestStreakStat: document.getElementById('finalBestStreakStat'),
+      explosionOverlay: document.getElementById('explosionOverlay'),
+      giftIcon: document.getElementById('giftIcon'),
+      resultAmount: document.getElementById('resultAmount'),
+      resultLabel: document.getElementById('resultLabel'),
+      burstRing: document.getElementById('burstRing')
+    };
+
+    function setMode(mode) {
+      appState.mode = mode;
+      syncControls();
+    }
+
+    function currentQuestion() {
+      return QUESTIONS[appState.currentIndex];
+    }
+
+    function formatSignedNumber(n) {
+      return `${n > 0 ? '+' : ''}${n}`;
+    }
+
+    function accuracyValue() {
+      if (!appState.answers.length) return 0;
+      return Math.round((appState.correct / appState.answers.length) * 100);
+    }
+
+    function renderHUD() {
+      el.scoreValue.textContent = appState.score;
+      el.streakValue.textContent = `x${appState.streak}`;
+      el.progressCount.textContent = `${Math.min(appState.currentIndex + 1, QUESTIONS.length)}/${QUESTIONS.length}`;
+      el.progressFill.style.width = `${(appState.currentIndex / QUESTIONS.length) * 100}%`;
+      el.stageLabel.textContent = `שלב ${Math.floor(appState.currentIndex / 5) + 1} מתוך 3`;
+    }
+
+    function renderQuestion() {
+      const q = currentQuestion();
+      if (!q) return;
+      el.factText.textContent = q.text;
+      el.riskBadge.textContent = q.risk;
+      el.factSub.textContent = appState.selectedBet ? 'בחר אמת או שקר' : 'בחר מטבע, ואז אמת או שקר';
+    }
+
+    function clearSelectedCoins() {
+      el.coins.forEach(btn => btn.classList.remove('is-selected'));
+    }
+
+    function syncBetText() {
+      el.selectedBetText.textContent = appState.selectedBet ? `נבחר: ${appState.selectedBet}` : 'לא נבחר מטבע';
+    }
+
+    function syncControls() {
+      const waitingBet = appState.mode === STATE.WAITING_BET;
+      const readyAnswer = appState.mode === STATE.READY_TO_ANSWER;
+      const resolving = appState.mode === STATE.RESOLVING;
+      const interactive = waitingBet || readyAnswer;
+
+      el.coins.forEach(btn => {
+        btn.disabled = !interactive;
+      });
+
+      el.truthBtn.disabled = !readyAnswer;
+      el.lieBtn.disabled = !readyAnswer;
+      el.truthBtn.classList.toggle('is-armed', readyAnswer);
+      el.lieBtn.classList.toggle('is-armed', readyAnswer);
+
+      if (waitingBet) {
+        el.actionStateText.textContent = 'נעול עד בחירת מטבע';
+      } else if (readyAnswer) {
+        el.actionStateText.textContent = 'המערכת דרוכה להכרעה';
+      } else if (resolving) {
+        el.actionStateText.textContent = 'מחשב תוצאה...';
+      } else {
+        el.actionStateText.textContent = '';
+      }
+
+      syncBetText();
+    }
+
+    function renderAll() {
+      renderHUD();
+      renderQuestion();
+      syncControls();
+    }
+
+    function startGame() {
+      appState.mode = STATE.WAITING_BET;
+      appState.currentIndex = 0;
+      appState.selectedBet = null;
+      appState.score = 0;
+      appState.correct = 0;
+      appState.streak = 0;
+      appState.bestStreak = 0;
+      appState.answers = [];
+      appState.resolving = false;
+      clearSelectedCoins();
+      hideAllScreens();
+      el.progressFill.style.width = '0%';
+      renderAll();
+    }
+
+    function hideAllScreens() {
+      el.startScreen.classList.remove('show');
+      el.stageScreen.classList.remove('show');
+      el.finalScreen.classList.remove('show');
+    }
+
+    function selectBet(value, btn) {
+      if (appState.mode !== STATE.WAITING_BET && appState.mode !== STATE.READY_TO_ANSWER) return;
+      appState.selectedBet = Number(value);
+      clearSelectedCoins();
+      btn.classList.add('is-selected');
+      setMode(STATE.READY_TO_ANSWER);
+      renderQuestion();
+    }
+
+    function disableGameTemporarily() {
+      setMode(STATE.RESOLVING);
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function resolveAnswer(userAnswer) {
+      if (appState.mode !== STATE.READY_TO_ANSWER || appState.resolving || !appState.selectedBet) return;
+      appState.resolving = true;
+      disableGameTemporarily();
+
+      const q = currentQuestion();
+      const isCorrect = q.answer === userAnswer;
+      const delta = isCorrect ? appState.selectedBet : -appState.selectedBet;
+
+      appState.answers.push({
+        index: appState.currentIndex,
+        correct: isCorrect,
+        bet: appState.selectedBet,
+        delta
+      });
+
+      if (isCorrect) {
+        appState.correct += 1;
+        appState.streak += 1;
+        appState.bestStreak = Math.max(appState.bestStreak, appState.streak);
+      } else {
+        appState.streak = 0;
+      }
+
+      appState.score += delta;
+      renderHUD();
+
+      await playExplosion(delta, isCorrect);
+
+      appState.currentIndex += 1;
+      appState.selectedBet = null;
+      clearSelectedCoins();
+
+      if (appState.currentIndex >= QUESTIONS.length) {
+        openFinalScreen();
+        appState.resolving = false;
+        return;
+      }
+
+      if (appState.currentIndex % 5 === 0) {
+        openStageScreen();
+        appState.resolving = false;
+        return;
+      }
+
+      setMode(STATE.WAITING_BET);
+      renderAll();
+      appState.resolving = false;
+    }
+
+    async function playExplosion(delta, isCorrect) {
+      el.factCard.classList.add('is-fading');
+      await sleep(180);
+
+      el.explosionOverlay.classList.add('show');
+      el.giftIcon.className = 'gift phase-pop';
+      el.resultAmount.textContent = formatSignedNumber(delta);
+      el.resultAmount.className = `result-amount ${isCorrect ? 'win' : 'lose'}`;
+      el.resultLabel.textContent = isCorrect ? 'פגיעה מדויקת' : 'הסיכון לא השתלם';
+      await sleep(360);
+
+      el.giftIcon.className = 'gift phase-shake';
+      await sleep(420);
+
+      el.giftIcon.className = 'gift phase-burst';
+      el.burstRing.classList.remove('show');
+      void el.burstRing.offsetWidth;
+      el.burstRing.classList.add('show');
+      await sleep(820);
+
+      el.explosionOverlay.classList.remove('show');
+      el.giftIcon.className = 'gift';
+      el.burstRing.classList.remove('show');
+      el.factCard.classList.remove('is-fading');
+    }
+
+    function openStageScreen() {
+      setMode(STATE.STAGE_BREAK);
+      const stageNumber = appState.currentIndex / 5;
+      el.stageKicker.textContent = `סיכום שלב ${stageNumber}`;
+      el.stageTitle.textContent = `סיימת שלב ${stageNumber}`;
+      el.stageText.textContent = stageNumber < 3
+        ? 'הקצב נשמר. השלב הבא כבר מוכן להמשך.'
+        : 'עוד רגע לסיום — נשאר מקטע אחרון.';
+      el.stageScoreStat.textContent = appState.score;
+      el.stageCorrectStat.textContent = appState.correct;
+      el.stageAccuracyStat.textContent = `${accuracyValue()}%`;
+      el.stageBestStreakStat.textContent = appState.bestStreak;
+      el.stageScreen.classList.add('show');
+      renderHUD();
+    }
+
+    function continueToNextStage() {
+      el.stageScreen.classList.remove('show');
+      setMode(STATE.WAITING_BET);
+      renderAll();
+    }
+
+    function openFinalScreen() {
+      setMode(STATE.FINISHED);
+      el.finalScoreStat.textContent = appState.score;
+      el.finalCorrectStat.textContent = `${appState.correct}/${QUESTIONS.length}`;
+      el.finalAccuracyStat.textContent = `${accuracyValue()}%`;
+      el.finalBestStreakStat.textContent = appState.bestStreak;
+      el.finalScreen.classList.add('show');
+      el.progressCount.textContent = `${QUESTIONS.length}/${QUESTIONS.length}`;
+      el.progressFill.style.width = '100%';
+      el.stageLabel.textContent = 'המשחק הושלם';
+      syncControls();
+    }
+
+    async function shareScore() {
+      const message = `סיימתי את LuckyFact עם ${appState.score} נקודות, ${appState.correct} תשובות נכונות ורצף שיא של ${appState.bestStreak}. בא לך לנסות גם?`;
+      const fallbackUrl = `${location.origin}${location.pathname}`;
+      const text = `${message} ${fallbackUrl}`;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'LuckyFact v3.0',
+            text: message,
+            url: fallbackUrl
+          });
+          return;
+        } catch (err) {}
+      }
+
+      const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+      window.open(waUrl, '_blank', 'noopener');
+    }
+
+    el.startBtn.addEventListener('click', startGame);
+    el.continueBtn.addEventListener('click', continueToNextStage);
+    el.restartBtn.addEventListener('click', startGame);
+    el.shareBtn.addEventListener('click', shareScore);
+    el.truthBtn.addEventListener('click', () => resolveAnswer(true));
+    el.lieBtn.addEventListener('click', () => resolveAnswer(false));
+
+    el.coins.forEach(btn => {
+      btn.addEventListener('click', () => selectBet(btn.dataset.bet, btn));
+    });
+
+    function boot() {
+      renderAll();
+      el.factText.textContent = QUESTIONS[0].text;
+      el.riskBadge.textContent = QUESTIONS[0].risk;
+      syncBetText();
+      syncControls();
+    }
+
+    boot();
+  </script></body>
+</html>
